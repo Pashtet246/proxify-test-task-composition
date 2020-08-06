@@ -57,7 +57,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { defineComponent, onMounted, ref } from '@vue/composition-api';
 
 interface Message {
   text: string;
@@ -66,117 +66,128 @@ interface Message {
   type?: string;
 }
 
-@Component
-export default class App extends Vue {
-  private sendableData: { [key: string]: string | number } = {
-    name: '',
-    age: 0,
-    location: '',
-    feeling: '',
-    hobby: '',
-  };
+export default defineComponent({
+  name: 'App',
+  setup(props, { root }) {
+    const sendableData: { [key: string]: string | number } = {
+      name: '',
+      age: 0,
+      location: '',
+      feeling: '',
+      hobby: '',
+    };
 
-  private next = 0;
-  private input = '';
-  private chatMessages: Message[] = [];
-  private sendingByBot = false;
-  private messages: Message[] = [
-    {
-      text: 'Hi, I\'m Peter!',
-      owner: 'him',
-    },
-    {
-      text: 'What\'s your name?',
-      type: 'question',
-      ask: "name",
-      owner: 'him',
-    },
-    {
-      text: 'Nice to meet you!',
-      type: 'answer',
-      owner: 'him',
-    },
-    {
-      text: 'How was your day?',
-      type: 'question',
-      ask: 'feeling',
-      owner: 'him',
-    },
-    {
-      text: 'Sounds interesting',
-      type: 'answer',
-      owner: 'him',
-    },
-    {
-      text: 'Where are you from?',
-      type: 'question',
-      ask: 'location',
-      owner: 'him',
-    },
-    {
-      text: 'Good place!',
-      type: 'answer',
-      owner: 'him',
-    },
-    {
-      text: 'How old are you?',
-      type: 'question',
-      ask: 'age',
-      owner: 'him',
-    },
-    {
-      text: 'Nice!',
-      type: 'answer',
-      owner: 'him',
-    },
-    {
-      text: 'What\'s your favorite hobby?',
-      type: 'question',
-      ask: 'hobby',
-      owner: 'him',
-    },
-    {
-      text: 'Wow, cool',
-      type: 'answer',
-      owner: 'him',
-    },
-  ];
+    let next = 0;
+    const input = ref('');
+    const chatMessages: Message[] = [];
+    const messages: Message[] = [
+      {
+        text: 'Hi, I\'m Peter!',
+        owner: 'him',
+      },
+      {
+        text: 'What\'s your name?',
+        type: 'question',
+        ask: 'name',
+        owner: 'him',
+      },
+      {
+        text: 'Nice to meet you!',
+        type: 'answer',
+        owner: 'him',
+      },
+      {
+        text: 'How was your day?',
+        type: 'question',
+        ask: 'feeling',
+        owner: 'him',
+      },
+      {
+        text: 'Sounds interesting',
+        type: 'answer',
+        owner: 'him',
+      },
+      {
+        text: 'Where are you from?',
+        type: 'question',
+        ask: 'location',
+        owner: 'him',
+      },
+      {
+        text: 'Good place!',
+        type: 'answer',
+        owner: 'him',
+      },
+      {
+        text: 'How old are you?',
+        type: 'question',
+        ask: 'age',
+        owner: 'him',
+      },
+      {
+        text: 'Nice!',
+        type: 'answer',
+        owner: 'him',
+      },
+      {
+        text: 'What\'s your favorite hobby?',
+        type: 'question',
+        ask: 'hobby',
+        owner: 'him',
+      },
+      {
+        text: 'Wow, cool',
+        type: 'answer',
+        owner: 'him',
+      },
+    ];
 
-  private mounted() {
-    this.sendByBot();
-  }
-
-  private showNext() {
-    const currentAnswer = this.messages[this.next-1].type === 'answer';
-    const answerWOType = !this.messages[this.next-1].type;
-    const ownerIsMe = this.chatMessages[this.chatMessages.length-1].owner === 'me';
-    if ( currentAnswer || answerWOType || ownerIsMe) {
-      this.sendByBot();
+    function sendByBot() {
+      chatMessages.push(messages[next++]);
     }
-  }
 
-  private sendByBot() {
-    this.chatMessages.push(this.messages[this.next++]);
-  }
-
-  private send() {
-    this.chatMessages.push({
-      text: this.input,
-      owner: 'me',
+    onMounted(() => {
+      sendByBot();
     });
-    // This wasn't in task, but I think that we need to set input text to values
-    this.sendableData[(this.messages[this.next-1].ask as string)] = this.input;
-    this.input = '';
-    this.scrollToEnd();
-  }
 
-  private scrollToEnd () {
-    this.$nextTick(() => {
-      const container = this.$el.querySelector('.chat-container') as Element;
-      container.scrollTop = container.scrollHeight;
-    })
-  }
-}
+    function showNext() {
+      const currentAnswer = messages[next - 1].type === 'answer';
+      const answerWOType = !messages[next - 1].type;
+      const ownerIsMe = chatMessages[chatMessages.length - 1].owner === 'me';
+      if ( currentAnswer || answerWOType || ownerIsMe) {
+        sendByBot();
+      }
+    }
+
+    function scrollToEnd() {
+      root.$nextTick(() => {
+        const container = root.$el.querySelector('.chat-container') as Element;
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+
+    function send() {
+      chatMessages.push({
+        text: input.value,
+        owner: 'me',
+      });
+      // This wasn't in task, but I think that we need to set input text to values
+      sendableData[(messages[next - 1].ask as string)] = input.value;
+      input.value = '';
+      scrollToEnd();
+    }
+
+    return {
+      send,
+      showNext,
+      chatMessages,
+      input,
+      next,
+      messages,
+      scrollToEnd,
+    };
+  },
+});
 </script>
 
 <style lang="scss">
